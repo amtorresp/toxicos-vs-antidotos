@@ -1,0 +1,161 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Check, X, RefreshCcw, Eye, EyeOff } from 'lucide-react';
+
+const ToxinsGame = () => {
+  const toxinsData = [
+    { toxin: "ACO Cumarínicos", antidote: "Vitamina K (filoquinona)" },
+    { toxin: "Anticolinérgicos", antidote: "Fisostigmina" },
+    { toxin: "Antagonistas de canales de calcio", antidote: "Gluconato cálcico o Cloruro de calcio" },
+    { toxin: "Antidepresivos tricíclicos", antidote: "Bicarbonato sódico" },
+    { toxin: "Benzodiazepinas", antidote: "Flumazenilo" },
+    { toxin: "β-bloqueantes", antidote: "Glucagón" },
+    { toxin: "Cianuro", antidote: "Hidroxicobalamina (Vit. B12)" },
+    { toxin: "Dabigatrán", antidote: "Idarucizumab" },
+    { toxin: "Digoxina", antidote: "Anticuerpos antidigital (Fab antidigoxina)" },
+    { toxin: "Heparina", antidote: "Sulfato de protamina" },
+    { toxin: "Hierro", antidote: "Desferoxamina" },
+    { toxin: "Insecticidas organofosforados", antidote: "Atropina + Pralidoximina" },
+    { toxin: "Isoniazida", antidote: "Piridoxina (Vit. B6)" },
+    { toxin: "Metahemoglobinizantes", antidote: "Azul de metileno" },
+    { toxin: "Metanol y etilenglicol", antidote: "Etanol o Fomepizol" },
+    { toxin: "Monóxido de carbono", antidote: "Oxígeno" },
+    { toxin: "Opiáceos", antidote: "Naloxona" },
+    { toxin: "Paracetamol", antidote: "N-Acetilcisteína" },
+    { toxin: "Plomo, arsénico, oro, mercurio, antimonio y bismuto", antidote: "Dimercaprol" },
+    { toxin: "Rivaroxabán, Apixabán", antidote: "Andexanet" },
+    { toxin: "Setas con amatinas", antidote: "Penicilina G o Silibinina" },
+    { toxin: "Veneno de víbora", antidote: "Suero antiofídico" }
+  ];
+
+  const [shuffledAntidotes, setShuffledAntidotes] = useState([]);
+  const [selectedPairs, setSelectedPairs] = useState({});
+  const [showResults, setShowResults] = useState(false);
+  const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    shuffleAntidotes();
+  }, []);
+
+  const shuffleAntidotes = () => {
+    const shuffled = [...toxinsData].map(item => item.antidote).sort(() => Math.random() - 0.5);
+    setShuffledAntidotes(shuffled);
+    setSelectedPairs({});
+    setShowResults(false);
+    setShowCorrectAnswers(false);
+  };
+
+  const handleSelect = (toxin, antidote) => {
+    if (!showResults) {
+      setSelectedPairs(prev => ({
+        ...prev,
+        [toxin]: antidote
+      }));
+    }
+  };
+
+  const checkAnswers = () => {
+    let correctCount = 0;
+    toxinsData.forEach(item => {
+      if (selectedPairs[item.toxin] === item.antidote) {
+        correctCount++;
+      }
+    });
+    setScore(correctCount);
+    setShowResults(true);
+  };
+
+  const isCorrectPair = (toxin, selectedAntidote) => {
+    const correctAntidote = toxinsData.find(item => item.toxin === toxin)?.antidote;
+    return selectedAntidote === correctAntidote;
+  };
+
+  return (
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold text-center">
+          Juego de Tóxicos y Antídotos
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4 flex justify-between items-center">
+          <Button 
+            onClick={shuffleAntidotes}
+            className="flex items-center gap-2"
+          >
+            <RefreshCcw className="w-4 h-4" /> Reiniciar
+          </Button>
+          <Button 
+            onClick={checkAnswers} 
+            disabled={Object.keys(selectedPairs).length !== toxinsData.length || showResults}
+            className="flex items-center gap-2"
+          >
+            <Check className="w-4 h-4" /> Comprobar Respuestas
+          </Button>
+          {showResults && (
+            <Button
+              onClick={() => setShowCorrectAnswers(!showCorrectAnswers)}
+              className="flex items-center gap-2"
+            >
+              {showCorrectAnswers ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showCorrectAnswers ? 'Ocultar Soluciones' : 'Ver Soluciones'}
+            </Button>
+          )}
+        </div>
+
+        {showResults && (
+          <div className="text-center mb-4 text-lg font-semibold">
+            Puntuación: {score} de {toxinsData.length} correctas
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            {toxinsData.map((item, index) => (
+              <div
+                key={item.toxin}
+                className="p-2 border rounded bg-gray-50"
+              >
+                {item.toxin}
+              </div>
+            ))}
+          </div>
+          <div className="space-y-2">
+            {toxinsData.map((item, index) => (
+              <div key={item.toxin} className="relative">
+                <select
+                  value={selectedPairs[item.toxin] || ''}
+                  onChange={(e) => handleSelect(item.toxin, e.target.value)}
+                  disabled={showResults}
+                  className={`w-full p-2 border rounded ${
+                    showResults
+                      ? isCorrectPair(item.toxin, selectedPairs[item.toxin])
+                        ? 'bg-green-100'
+                        : 'bg-red-100'
+                      : 'bg-white'
+                  }`}
+                >
+                  <option value="">Selecciona un antídoto</option>
+                  {shuffledAntidotes.map((antidote) => (
+                    <option key={antidote} value={antidote}>
+                      {antidote}
+                    </option>
+                  ))}
+                </select>
+                {showCorrectAnswers && !isCorrectPair(item.toxin, selectedPairs[item.toxin]) && (
+                  <div className="mt-1 text-sm text-green-600">
+                    Respuesta correcta: {item.antidote}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ToxinsGame;
